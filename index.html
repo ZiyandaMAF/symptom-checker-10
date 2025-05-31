@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thembelihle Health Assistant</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to right, #f2f9ff, #ffffff);
+      padding: 0;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .app {
+      background: white;
+      padding: 2rem;
+      border-radius: 1rem;
+      box-shadow: 0 0 25px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 480px;
+    }
+    .hidden {
+      display: none;
+    }
+    button {
+      margin-top: 1rem;
+      padding: 0.75rem;
+      width: 100%;
+      font-size: 1rem;
+      border: none;
+      border-radius: 0.5rem;
+      background: #007bff;
+      color: white;
+      cursor: pointer;
+    }
+    input {
+      width: 100%;
+      padding: 0.5rem;
+      margin: 0.5rem 0;
+      border: 1px solid #ccc;
+      border-radius: 0.5rem;
+    }
+    .title {
+      font-size: 1.25rem;
+      margin-bottom: 1rem;
+      font-weight: bold;
+    }
+    .navigation {
+      display: flex;
+      justify-content: space-between;
+    }
+    #chatbox {
+      background: #f0f0f0;
+      padding: 1rem;
+      border-radius: 0.5rem;
+      margin-bottom: 1rem;
+      height: 180px;
+      overflow-y: auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- Page 1: Language & Emergency -->
+    <div id="page1">
+      <h2>Thembelihle Health Assistant</h2>
+      <p><strong>Welcome to Thembelihle Technologies</strong></p>
+      <p id="selectLang">Select Language / Khetha Ulimi / Kies Taal:</p>
+      <button onclick="selectLanguage('en')">English</button>
+      <button onclick="selectLanguage('zu')">isiZulu</button>
+      <button onclick="selectLanguage('af')">Afrikaans</button>
+      <p id="emergencyText">Is this an emergency?</p>
+      <button onclick="showEmergencyMsg()" id="emergencyBtn">Yes</button>
+    </div>
+
+    <!-- Page 2: POPIA Consent -->
+    <div id="page2" class="hidden">
+      <div class="title" id="consentTitle"></div>
+      <p id="consentText"></p>
+      <div class="navigation">
+        <button onclick="prevPage(1)">Back</button>
+        <button onclick="nextPage(3)" id="consentBtn"></button>
+      </div>
+    </div>
+
+    <!-- Page 3: Personal Details -->
+    <div id="page3" class="hidden">
+      <div class="title" id="detailsTitle"></div>
+      <input id="name" placeholder="" required />
+      <input id="surname" placeholder="" required />
+      <input id="id" placeholder="" required pattern="\d{13}" />
+      <input id="address" placeholder="" required />
+      <div class="navigation">
+        <button onclick="prevPage(2)">Back</button>
+        <button onclick="validateDetails()" id="continueBtn"></button>
+      </div>
+    </div>
+
+    <!-- Page 4: Chatbot -->
+    <div id="page4" class="hidden">
+      <div class="title" id="chatTitle"></div>
+      <div id="chatbox"></div>
+      <input id="userInput" placeholder="" />
+      <button onclick="analyzeSymptoms()" id="sendBtn"></button>
+    </div>
+  </div>
+
+  <script>
+    let userName = '';
+    let language = 'en';
+
+    const translations = {
+      en: {
+        consentTitle: "Consent",
+        consentText: "We value your privacy. In accordance with the POPI Act, we need your consent to collect and process your personal information.",
+        consentBtn: "I Consent",
+        detailsTitle: "Enter Your Details",
+        name: "Name",
+        surname: "Surname",
+        id: "ID Number",
+        address: "Address",
+        continue: "Continue",
+        chatTitle: "Health Assistant Chat",
+        greeting: "Hi {name}, please describe your symptoms.",
+        send: "Send"
+      },
+      zu: {
+        consentTitle: "Imvume",
+        consentText: "Siyabazisa ubuqu bakho. Ngokwemithetho yePOPI, sidinga imvume yakho ukuze siqoqe futhi sisebenzise ulwazi lwakho lomuntu siqu.",
+        consentBtn: "Ngiyavuma",
+        detailsTitle: "Faka Imininingwane Yakho",
+        name: "Igama",
+        surname: "Isibongo",
+        id: "Inombolo Kamazisi",
+        address: "Ikheli",
+        continue: "Qhubeka",
+        chatTitle: "Ingxoxo Yomsizi Wezempilo",
+        greeting: "Sawubona {name}, sicela uchaze izimpawu zakho.",
+        send: "Thumela"
+      },
+      af: {
+        consentTitle: "Toestemming",
+        consentText: "Ons waardeer jou privaatheid. Volgens die POPI-wet het ons jou toestemming nodig om persoonlike inligting te versamel en te verwerk.",
+        consentBtn: "Ek Stem In",
+        detailsTitle: "Voer Jou Besonderhede In",
+        name: "Naam",
+        surname: "Van",
+        id: "ID Nommer",
+        address: "Adres",
+        continue: "Gaan voort",
+        chatTitle: "Gesondheidsassistent Gesprek",
+        greeting: "Hallo {name}, beskryf asseblief jou simptome.",
+        send: "Stuur"
+      }
+    };
+
+    function applyTranslations() {
+      const t = translations[language];
+      document.getElementById('consentTitle').innerText = t.consentTitle;
+      document.getElementById('consentText').innerText = t.consentText;
+      document.getElementById('consentBtn').innerText = t.consentBtn;
+      document.getElementById('detailsTitle').innerText = t.detailsTitle;
+      document.getElementById('name').placeholder = t.name;
+      document.getElementById('surname').placeholder = t.surname;
+      document.getElementById('id').placeholder = t.id;
+      document.getElementById('address').placeholder = t.address;
+      document.getElementById('continueBtn').innerText = t.continue;
+      document.getElementById('chatTitle').innerText = t.chatTitle;
+      document.getElementById('userInput').placeholder = t.send;
+      document.getElementById('sendBtn').innerText = t.send;
+    }
+
+    function selectLanguage(lang) {
+      language = lang;
+      applyTranslations();
+      document.getElementById('page1').classList.add('hidden');
+      document.getElementById('page2').classList.remove('hidden');
+    }
+
+    function showEmergencyMsg() {
+      alert("A health professional will be with you shortly.");
+    }
+
+    function prevPage(pageNum) {
+      document.getElementById(`page${pageNum}`).classList.add('hidden');
+      document.getElementById(`page${pageNum - 1}`).classList.remove('hidden');
+    }
+
+    function nextPage(pageNum) {
+      document.getElementById(`page${pageNum - 1}`).classList.add('hidden');
+      document.getElementById(`page${pageNum}`).classList.remove('hidden');
+    }
+
+    function validateDetails() {
+      const name = document.getElementById('name').value.trim();
+      const surname = document.getElementById('surname').value.trim();
+      const id = document.getElementById('id').value.trim();
+      const address = document.getElementById('address').value.trim();
+
+      if (name && surname && /^\d{13}$/.test(id) && address) {
+        userName = name;
+        const greet = translations[language].greeting.replace('{name}', userName);
+        document.getElementById('chatbox').innerHTML = `<p>${greet}</p>`;
+        nextPage(4);
+      } else {
+        alert('Please fill in all fields correctly.');
+      }
+    }
+
+    function analyzeSymptoms() {
+      const input = document.getElementById('userInput').value.toLowerCase();
+      const chatbox = document.getElementById('chatbox');
+
+      const keywords = {
+        pharmacy: ['flu', 'headache', 'diarrhea', 'cough', 'sore throat'],
+        nurse: ['pain', 'testing', 'fever', 'rash'],
+        gp: ['chest', 'breathing', 'dizzy', 'confused', 'vomiting']
+      };
+
+      let response = "";
+      if (keywords.pharmacy.some(word => input.includes(word))) {
+        response = {
+          en: "Please visit your nearest pharmacy for treatment.",
+          zu: "Sicela uye ekhemisi eduze ukuthola ukwelashwa.",
+          af: "Besoek asseblief jou naaste apteek vir behandeling."
+        }[language];
+      } else if (keywords.nurse.some(word => input.includes(word))) {
+        response = {
+          en: "Please visit your clinic and speak to a nurse for further testing.",
+          zu: "Sicela uye ekiliniki uxoxe nonesi ukuze uthole ukuhlolwa okwengeziwe.",
+          af: "Besoek asseblief jou kliniek en praat met 'n verpleegkundige vir verdere toetse."
+        }[language];
+      } else if (keywords.gp.some(word => input.includes(word))) {
+        response = {
+          en: "You should see a General Practitioner as soon as possible.",
+          zu: "Kuhle ukuthi ubone udokotela jikelele ngokushesha okukhulu.",
+          af: "Jy moet so gou moontlik 'n algemene praktisyn sien."
+        }[language];
+      } else {
+        response = {
+          en: "Please describe your symptoms in more detail.",
+          zu: "Sicela uchaze izimpawu zakho kabanzi.",
+          af: "Beskryf asseblief jou simptome in meer besonderhede."
+        }[language];
+      }
+
+      chatbox.innerHTML += `<p><strong>You:</strong> ${input}</p>`;
+      chatbox.innerHTML += `<p><strong>Assistant:</strong> ${response}</p>`;
+      document.getElementById('userInput').value = '';
+      chatbox.scrollTop = chatbox.scrollHeight;
+
+      chatbox.innerHTML += `<p><em>Demo over, thank you.</em></p>`;
+    }
+  </script>
+</body>
+</html>
